@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Timers</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            margin-top: 40px;
+        }
+
+        .timer-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .timer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .button {
+            transition: background-color 0.2s ease;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .empty-message {
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mx-auto px-4">
+    <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Your Saved Timers</h1>
+    
+    {% if timers %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for timer in timers %}
+                <div class="timer-card bg-white shadow-lg rounded-lg p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">{{ timer.name }}</h2>
+                    <p class="text-gray-600 mb-1">Sets: <span class="font-medium">{{ timer.sets }}</span></p>
+                    <p class="text-gray-600 mb-1">High Intensity: <span class="font-medium">{{ timer.high_intensity }}s</span></p>
+                    <p class="text-gray-600 mb-1">Low Intensity: <span class="font-medium">{{ timer.low_intensity }}s</span></p>
+                    <p class="text-gray-600 mb-1">Warm-up: <span class="font-medium">{{ timer.warmup }}s</span></p>
+                    <p class="text-gray-600 mb-4">Cool-down: <span class="font-medium">{{ timer.cooldown }}s</span></p>
+                    
+                    <div class="flex justify-between">
+                        <a href="{{ url_for('start_timer', timer_id=timer.id) }}" 
+                           class="button bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline">
+                            Start Timer
+                        </a>
+                        <a href="{{ url_for('edit_timer', timer_id=timer.id) }}" 
+                           class="button bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline">
+                            Edit
+                        </a>
+                        <form action="{{ url_for('delete_timer', timer_id=timer.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="button bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full focus:outline-none focus:shadow-outline">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="empty-message text-center text-gray-600">You haven't created any timers yet. 
+            <a href="{{ url_for('create_timer') }}" class="text-blue-500 hover:text-blue-700">Create one now</a>.
+        </p>
+    {% endif %}
+</div>
+
+</body>
+</html>

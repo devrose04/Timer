@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Timer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-8">
+        <div class="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto">
+            <h1 class="text-2xl font-bold mb-6 text-gray-800 text-center">Edit Timer</h1>
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Name:</label>
+                    <input type="text" name="name" value="{{ timer.name }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Sets:</label>
+                    <input type="number" name="sets" value="{{ timer.sets }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">High Intensity Duration (seconds):</label>
+                    <input type="number" name="high_intensity" value="{{ timer.high_intensity }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">High Intensity Color:</label>
+                    <input type="color" name="high_intensity_color" value="{{ timer.high_intensity_color }}"
+                        class="w-full h-10 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Low Intensity Duration (seconds):</label>
+                    <input type="number" name="low_intensity" value="{{ timer.low_intensity }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Low Intensity Color:</label>
+                    <input type="color" name="low_intensity_color" value="{{ timer.low_intensity_color }}"
+                        class="w-full h-10 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Warm-up Duration (seconds):</label>
+                    <input type="number" name="warmup" value="{{ timer.warmup }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-gray-700 font-semibold mb-2">Cooldown Duration (seconds):</label>
+                    <input type="number" name="cooldown" value="{{ timer.cooldown }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="flex justify-between">
+                    <a href="{{ url_for('view_timers') }}" class="text-gray-600 hover:text-gray-800">Back to Timers</a>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                        Update Timer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

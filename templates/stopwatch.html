@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="{{ url_for('home') }}" class="logo">HIIT Timer</a>
+            <div>
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('logout') }}" class="text-gray-800 hover:text-gray-600">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="text-gray-800 hover:text-gray-600 mr-4">Login</a>
+                    <a href="{{ url_for('signup') }}" class="text-gray-800 hover:text-gray-600">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-8 px-4 text-center">
+        <h2 class="text-3xl font-bold mb-4">Stopwatch</h2>
+        <div id="stopwatch-display" class="text-4xl font-bold mb-4">00:00:00</div>
+        <div class="flex justify-center">
+            <button id="start-stopwatch" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Start</button>
+            <button id="stop-stopwatch" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2" disabled>Stop</button>
+            <button id="reset-stopwatch" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" disabled>Reset</button>
+        </div>
+    </div>
+
+    <script>
+        let stopwatchInterval;
+        let elapsedTime = 0; // in seconds
+
+        document.getElementById('start-stopwatch').addEventListener('click', function() {
+            document.getElementById('start-stopwatch').disabled = true;
+            document.getElementById('stop-stopwatch').disabled = false;
+            document.getElementById('reset-stopwatch').disabled = false;
+
+            stopwatchInterval = setInterval(function() {
+                elapsedTime++;
+                updateStopwatchDisplay(elapsedTime);
+            }, 1000);
+        });
+
+        document.getElementById('stop-stopwatch').addEventListener('click', function() {
+            clearInterval(stopwatchInterval);
+            document.getElementById('start-stopwatch').disabled = false;
+            document.getElementById('stop-stopwatch').disabled = true;
+        });
+
+        document.getElementById('reset-stopwatch').addEventListener('click', function() {
+            clearInterval(stopwatchInterval);
+            elapsedTime = 0;
+            updateStopwatchDisplay(elapsedTime);
+            document.getElementById('start-stopwatch').disabled = false;
+            document.getElementById('stop-stopwatch').disabled = true;
+            document.getElementById('reset-stopwatch').disabled = true;
+        });
+
+        function updateStopwatchDisplay(time) {
+            const hours = String(Math.floor(time / 3600)).padStart(2, '0');
+            const minutes = String(Math.floor((time % 3600) / 60)).padStart(2, '0');
+            const seconds = String(time % 60).padStart(2, '0');
+            document.getElementById('stopwatch-display').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+    </script>
+</body>
+</html>
