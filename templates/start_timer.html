@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interval Timer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
     
     <style>
         body {
@@ -118,7 +120,7 @@
             <!-- Add a data-url attribute with the link to the View Timers page -->
             <button id="menu-btn" data-url="{{ url_for('view_timers') }}">⬅</button>
             <button id="prev-btn">◀ Prev</button>
-            <button id="play-pause-btn">▶</button>
+            <button id="play-pause-btn"><i class="fas fa-play"></i></button>
             <button id="next-btn">Next ▶</button>
             <button id="info-btn">ⓘ</button>
         </div>
@@ -258,7 +260,7 @@
         function startTimer() {
             if (!isRunning) {
                 isRunning = true;
-                playPauseBtn.textContent = "⏸";
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; // Change icon to pause
                 completionSound.play()
                 timer = setInterval(() => {
                     if (timeRemaining > 0) {
@@ -302,7 +304,7 @@
                 if (userInitiated) {
                     completionSound.play();  // Play sound only if the user clicked the pause button
                 }
-                playPauseBtn.textContent = "▶";
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; // Change icon to play
                 clearInterval(timer);
             }
         }
