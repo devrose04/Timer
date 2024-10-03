@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Custom Timer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+        function addInterval() {
+            const intervalContainer = document.getElementById('intervals');
+            const intervalIndex = intervalContainer.children.length;
+            const intervalTemplate = `
+                <div class="mb-4" id="interval_${intervalIndex}">
+                    <label class="block text-gray-700 font-semibold mb-2">Interval Name:</label>
+                    <input type="text" name="interval_name[]" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2">
+                    
+                    <label class="block text-gray-700 font-semibold mb-2">Interval Duration (seconds):</label>
+                    <input type="number" name="interval_seconds[]" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2">
+                    
+                    <label class="block text-gray-700 font-semibold mb-2">Interval Color:</label>
+                    <input type="color" name="interval_color[]" required
+                        class="w-full h-10 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2">
+                    
+                    <button type="button" onclick="removeInterval(${intervalIndex})"
+                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                        Remove Interval
+                    </button>
+                </div>`;
+            intervalContainer.insertAdjacentHTML('beforeend', intervalTemplate);
+        }
+
+        function removeInterval(index) {
+            const intervalElement = document.getElementById(`interval_${index}`);
+            intervalElement.remove();
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-8">
+        <div class="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto">
+            <h1 class="text-2xl font-bold mb-6 text-gray-800 text-center">Edit Custom Timer</h1>
+            <form method="POST">
+                <div class="mb-4">
+                    <label class="block text-gray-700 font-semibold mb-2">Timer Name:</label>
+                    <input type="text" id="name" name="name" value="{{ timer.name }}" required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div id="intervals">
+                    <!-- Loop through intervals and create form fields for each -->
+                    {% for index in range(timer.intervals | length) %}
+                    {% set interval = timer.intervals[index] %}
+                    <div class="mb-4" id="interval_{{ index }}">
+                        <label class="block text-gray-700 font-semibold mb-2">Interval Name:</label>
+                        <input type="text" name="interval_name[]" value="{{ interval.name }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2">
+                        
+                        <label class="block text-gray-700 font-semibold mb-2">Interval Duration (seconds):</label>
+                        <input type="number" name="interval_seconds[]" value="{{ interval.duration }}" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2">
+                        
+                        <label class="block text-gray-700 font-semibold mb-2">Interval Color:</label>
+                        <input type="color" name="interval_color[]" value="{{ interval.color }}" required
+                            class="w-full h-10 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 mb-2">
+                        
+                        <button type="button" onclick="removeInterval({{ index }})"
+                            class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-700 focus:outline-none">
+                            Remove Interval
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Button to add new intervals -->
+                <div class="mb-4">
+                    <button type="button" onclick="addInterval()"
+                        class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none">
+                        Add Interval
+                    </button>
+                </div>
+
+                <div class="flex justify-between">
+                    <a href="{{ url_for('view_timers') }}" class="text-gray-600 hover:text-gray-800">Back to Timers</a>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none">
+                        Update Timer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

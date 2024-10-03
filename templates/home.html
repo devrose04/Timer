@@ -20,9 +20,9 @@
 <body class="bg-gray-100 min-h-screen">
     <nav class="bg-white shadow-md">
         <div class="container mx-auto px-6 py-3 flex items-center">
-            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img"> <!-- Update the src attribute with your logo path -->
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo-img">
             <a href="{{ url_for('home') }}" class="logo">HIIT Timer</a>
-            <div class="ml-auto"> <!-- This will push the links to the right -->
+            <div class="ml-auto">
                 {% if current_user.is_authenticated %}
                     <a href="{{ url_for('logout') }}" class="text-gray-800 hover:text-gray-600">Logout</a>
                 {% else %}
@@ -32,7 +32,6 @@
             </div>
         </div>
     </nav>
-    
     <div class="container mx-auto mt-8 px-4 text-center">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -43,7 +42,6 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
         <h1 class="text-4xl font-bold mb-8">Welcome to HIIT Timer</h1>
         <a href="{{ url_for('create_timer') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full text-xl mb-4 inline-block">
             Create New Timer
@@ -58,7 +56,7 @@
                 Go to Stopwatch
             </a>
         </div>
+       
     </div>
-    
 </body>
 </html>

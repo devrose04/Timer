@@ -3,77 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stopwatch</title>
+    <title>Create Stopwatch</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        .logo {
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f4f8;
+        }
+
+        .container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .form-card {
+            background-color: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .form-heading {
             font-size: 24px;
             font-weight: bold;
-            color: #4a5568;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #4a4a4a;
+        }
+
+        .form-input {
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            padding: 10px 14px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .form-input:focus {
+            border-color: #60a5fa;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.4);
+        }
+
+        .form-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .form-button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow-md">
-        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
-            <a href="{{ url_for('home') }}" class="logo">HIIT Timer</a>
-            <div>
-                {% if current_user.is_authenticated %}
-                    <a href="{{ url_for('logout') }}" class="text-gray-800 hover:text-gray-600">Logout</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="text-gray-800 hover:text-gray-600 mr-4">Login</a>
-                    <a href="{{ url_for('signup') }}" class="text-gray-800 hover:text-gray-600">Sign Up</a>
-                {% endif %}
+<body>
+
+<div class="container">
+    <div class="form-card">
+        <h2 class="form-heading">Create Stopwatch</h2>
+        <form method="POST" action="{{ url_for('stopwatch') }}">
+            <div class="mb-4">
+                <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Timer Name</label>
+                <input type="text" id="name" name="name" class="form-input" placeholder="Enter Timer Name" required>
             </div>
-        </div>
-    </nav>
-
-    <div class="container mx-auto mt-8 px-4 text-center">
-        <h2 class="text-3xl font-bold mb-4">Stopwatch</h2>
-        <div id="stopwatch-display" class="text-4xl font-bold mb-4">00:00:00</div>
-        <div class="flex justify-center">
-            <button id="start-stopwatch" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Start</button>
-            <button id="stop-stopwatch" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2" disabled>Stop</button>
-            <button id="reset-stopwatch" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" disabled>Reset</button>
-        </div>
+            <div class="mb-4">
+                <label for="warmup" class="block text-gray-700 text-sm font-bold mb-2">Warm-up Duration (seconds)</label>
+                <input type="number" id="warmup" name="warmup" min="0" class="form-input" placeholder="Enter Warm-up Duration" required>
+            </div>
+            <div class="mb-4">
+                <label for="high_intensity" class="block text-gray-700 text-sm font-bold mb-2">High Intensity Interval (seconds)</label>
+                <input type="number" id="high_intensity" name="high_intensity" min="1" class="form-input" placeholder="Enter Duration (in seconds)" required>
+            </div>
+            <div class="mb-4">
+                <label for="cooldown" class="block text-gray-700 text-sm font-bold mb-2">Cool-down Duration (seconds)</label>
+                <input type="number" id="cooldown" name="cooldown" min="0" class="form-input" placeholder="Enter Cool-down Duration" required>
+            </div>
+            <div class="mb-4">
+                <label for="high_intensity_color" class="block text-gray-700 text-sm font-bold mb-2">High Intensity Color</label>
+                <input type="color" id="high_intensity_color" name="high_intensity_color" class="form-input" required>
+            </div>
+            <div class="mb-4">
+                <label for="warmup_color" class="block text-gray-700 text-sm font-bold mb-2">Warm-up Color</label>
+                <input type="color" id="warmup_color" name="warmup_color" class="form-input" required>
+            </div>
+            <div class="mb-4">
+                <label for="cooldown_color" class="block text-gray-700 text-sm font-bold mb-2">Cool-down Color</label>
+                <input type="color" id="cooldown_color" name="cooldown_color" class="form-input" required>
+            </div>
+            <div class="flex items-center justify-between">
+                <a href="{{ url_for('view_timers') }}" class="text-gray-600 hover:text-gray-800">Back to Timers</a>
+                <button type="submit" class="form-button">Create Stopwatch</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <script>
-        let stopwatchInterval;
-        let elapsedTime = 0; // in seconds
-
-        document.getElementById('start-stopwatch').addEventListener('click', function() {
-            document.getElementById('start-stopwatch').disabled = true;
-            document.getElementById('stop-stopwatch').disabled = false;
-            document.getElementById('reset-stopwatch').disabled = false;
-
-            stopwatchInterval = setInterval(function() {
-                elapsedTime++;
-                updateStopwatchDisplay(elapsedTime);
-            }, 1000);
-        });
-
-        document.getElementById('stop-stopwatch').addEventListener('click', function() {
-            clearInterval(stopwatchInterval);
-            document.getElementById('start-stopwatch').disabled = false;
-            document.getElementById('stop-stopwatch').disabled = true;
-        });
-
-        document.getElementById('reset-stopwatch').addEventListener('click', function() {
-            clearInterval(stopwatchInterval);
-            elapsedTime = 0;
-            updateStopwatchDisplay(elapsedTime);
-            document.getElementById('start-stopwatch').disabled = false;
-            document.getElementById('stop-stopwatch').disabled = true;
-            document.getElementById('reset-stopwatch').disabled = true;
-        });
-
-        function updateStopwatchDisplay(time) {
-            const hours = String(Math.floor(time / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((time % 3600) / 60)).padStart(2, '0');
-            const seconds = String(time % 60).padStart(2, '0');
-            document.getElementById('stopwatch-display').textContent = `${hours}:${minutes}:${seconds}`;
-        }
-    </script>
 </body>
 </html>

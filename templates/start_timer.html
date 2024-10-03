@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interval Timer</title>
+    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,62 +15,87 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            transition: background-color 0.5s ease; /* Added smooth transition */
-        }
-
-        .timer-container {
-            width: 100%;
-            max-width: 600px;
-            color: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             transition: background-color 0.5s ease;
         }
-
-        .time-display {
-            font-size: 72px;
-            text-align: center;
-            padding: 20px 0;
+    
+        .timer-container {
+            width: 100%;
+            height: 100vh; /* Full height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.8); /* Dark background */
+            border-radius: 0; /* Remove border-radius for full screen */
+            overflow: hidden;
+            box-shadow: none;
+            transition: background-color 0.5s ease;
         }
-
+    
+        .time-display {
+            font-size: 50vw; /* Responsive font size for seconds */
+            max-font-size: 400px; /* Prevents it from getting too large */
+            text-align: center;
+            padding: 0;
+            margin: 0;
+        }
+    
         .timer-details {
             display: flex;
-            justify-content: space-between;
-            padding: 10px 20px;
-            background-color: rgba(0, 0, 0, 0.1);
+            justify-content: space-around;
+            width: 100%;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
         }
-
+    
         .timer-details div {
             text-align: center;
         }
-
+    
         .timer-details h3 {
             margin: 0;
-            font-size: 14px;
+            font-size: 5vw; /* Responsive size for headings */
             font-weight: normal;
         }
-
+    
         .timer-details p {
             margin: 5px 0 0;
-            font-size: 18px;
+            font-size: 4vw; /* Responsive size for text */
         }
-
+    
         .controls {
             display: flex;
-            justify-content: space-between;
-            padding: 10px 20px;
-            background-color: rgba(0, 0, 0, 0.2);
+            justify-content: space-around;
+            width: 100%;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
         }
-
+    
         .controls button {
             background: none;
             border: none;
             color: white;
-            font-size: 24px;
+            font-size: 5vw; /* Responsive size for button icons */
             cursor: pointer;
         }
+    
+        @media (min-width: 768px) {
+            .time-display {
+                font-size: 400px; /* Fixed size for larger screens */
+            }
+            .timer-details h3 {
+                font-size: 50px; /* Fixed size for headings */
+            }
+            .timer-details p {
+                font-size: 48px; /* Fixed size for text */
+            }
+            .controls button {
+                font-size: 56px; /* Fixed size for button icons */
+            }
+        }
     </style>
+    
 </head>
 <body>
     <div class="timer-container">
@@ -89,41 +115,44 @@
             </div>
         </div>
         <div class="controls">
-            <button id="menu-btn">☰</button>
+            <!-- Add a data-url attribute with the link to the View Timers page -->
+            <button id="menu-btn" data-url="{{ url_for('view_timers') }}">⬅</button>
             <button id="prev-btn">◀ Prev</button>
-            <button id="play-pause-btn">⏸</button>
+            <button id="play-pause-btn">▶</button>
             <button id="next-btn">Next ▶</button>
             <button id="info-btn">ⓘ</button>
         </div>
     </div>
-    <audio id="transition-sound" src="/static/sounds/sound.mp3"></audio>
-    <audio id="completion-sound" src="/static/sounds/complete.mp3"></audio>
+    <audio id="transition-sound" src="/static/sounds/sound1.mp3"></audio>
+    <audio id="completion-sound" src="/static/sounds/complete1.mp3"></audio>
     <audio id="triple-sound" src="/static/sounds/triplebell.mp3"></audio>
 
-
     <script>
+        // Timer data will be populated by the server-side template
         const timerData = {
-            warmup: {{ warmup_duration }},
-            high: {{ high_duration }},
-            low: {{ low_duration }},
-            cooldown: {{ cooldown_duration }},
-            sets: {{ sets }}
+            name: "{{ timer_name }}",
+            intervals: {{ intervals|tojson if intervals else 'null' }},
+            warmup: {{ warmup_duration|default(0) }},
+            high: {{ high_duration|default(0) }},
+            low: {{ low_duration|default(0) }},
+            cooldown: {{ cooldown_duration|default(0) }},
+            sets: {{ sets|default(1) }}
         };
 
         const phaseColors = {
-            warmup: "{{ warmup_color }}",
-            high: "{{ high_color }}",
-            low: "{{ low_color }}",
-            cooldown: "{{ cooldown_color }}"
+            warmup: "{{ warmup_color|default('#FFFF00') }}",
+            high: "{{ high_color|default('#FF0000') }}",
+            low: "{{ low_color|default('#00FF00') }}",
+            cooldown: "{{ cooldown_color|default('#0000FF') }}"
         };
 
-        const phases = ["warmup", "high", "low", "cooldown"];
+        let phases = [];
         let currentPhaseIndex = 0;
         let currentSet = 1;
         let isRunning = false;
         let timeElapsed = 0;
-        let timeRemaining = timerData.warmup;
-        let totalDuration = 0;
+        let timeRemaining = 0;
+        let timer = null;
 
         const timeDisplayElement = document.querySelector('.time-display');
         const elapsedElement = document.getElementById('elapsed');
@@ -133,10 +162,86 @@
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
         const timerContainer = document.querySelector('.timer-container');
-        const bodyElement = document.body;  // Reference to the body element
+        const bodyElement = document.body;
+        const menuBtn = document.getElementById('menu-btn');
 
-        // Calculate total duration
-        totalDuration = timerData.sets * (timerData.warmup + timerData.high + timerData.low + timerData.cooldown);
+        const transitionSound = document.getElementById('transition-sound');
+        const completionSound = document.getElementById('completion-sound');
+        const tripleSound = document.getElementById('triple-sound');
+
+
+        function navigateToViewTimers() {
+            const url = menuBtn.getAttribute('data-url');
+            if (url) {
+                // If a timer is running, ask for confirmation before navigating away
+                if (isRunning) {
+                    if (confirm("Timer is still running. Are you sure you want to exit?")) {
+                        window.location.href = url;
+                    }
+                } else {
+                    window.location.href = url;
+                }
+            } else {
+                console.error("View Timers URL not found");
+            }
+        }
+
+        function initializeTimer() {
+            phases = [];
+
+            // Include warmup only once at the start
+            if (timerData.warmup > 0) {
+                phases.push({ name: 'warmup', duration: timerData.warmup, color: phaseColors.warmup });
+            }
+
+            // Add high and low phases for each set, but skip low intensity in the last set
+            for (let i = 0; i < timerData.sets; i++) {
+                if (timerData.high > 0) {
+                    phases.push({ name: 'high', duration: timerData.high, color: phaseColors.high, set: i + 1 });
+                }
+                if (timerData.low > 0 && i < timerData.sets - 1) {  // Skip low intensity in the last set
+                    phases.push({ name: 'low', duration: timerData.low, color: phaseColors.low, set: i + 1 });
+                }
+            }
+
+            // Include cooldown only once after all sets
+            if (timerData.cooldown > 0) {
+                phases.push({ name: 'cooldown', duration: timerData.cooldown, color: phaseColors.cooldown });
+            }
+
+            // Set the initial remaining time to the duration of the first phase
+            timeRemaining = phases[0].duration;
+            updateDisplay();
+            updateBackgroundColor();
+        }
+
+
+        function updateDisplay() {
+            timeDisplayElement.textContent = formatTime(timeRemaining);
+            elapsedElement.textContent = formatTime(timeElapsed);
+            
+            // Update set display
+            let currentSetNumber = 1;
+            for (let i = 0; i <= currentPhaseIndex; i++) {
+                if (phases[i].set) {
+                    currentSetNumber = phases[i].set;
+                }
+            }
+            setElement.textContent = `${currentSetNumber}/${timerData.sets}`;
+            
+            remainingElement.textContent = formatTime(calculateTotalRemainingTime());
+        }
+
+        function calculateTotalRemainingTime() {
+            let totalRemaining = timeRemaining;
+            for (let i = currentPhaseIndex + 1; i < phases.length; i++) {
+                totalRemaining += phases[i].duration;
+            }
+            return totalRemaining;
+        }
+
+
+
 
         function formatTime(seconds) {
             const minutes = Math.floor(seconds / 60);
@@ -144,23 +249,17 @@
             return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
         }
 
-        function updateDisplay() {
-            timeDisplayElement.textContent = formatTime(timeRemaining);
-            elapsedElement.textContent = formatTime(timeElapsed);
-            setElement.textContent = `${currentSet}/${timerData.sets}`;
-            remainingElement.textContent = formatTime(totalDuration - timeElapsed);
-        }
-
         function updateBackgroundColor() {
-            const currentColor = phaseColors[phases[currentPhaseIndex]];
-            timerContainer.style.backgroundColor = currentColor;  // Update timer container color
-            bodyElement.style.backgroundColor = currentColor;  // Update entire body background color
+            const currentColor = phases[currentPhaseIndex].color;
+            timerContainer.style.backgroundColor = currentColor;
+            bodyElement.style.backgroundColor = currentColor;
         }
 
         function startTimer() {
             if (!isRunning) {
                 isRunning = true;
                 playPauseBtn.textContent = "⏸";
+                completionSound.play()
                 timer = setInterval(() => {
                     if (timeRemaining > 0) {
                         timeRemaining--;
@@ -173,88 +272,73 @@
             }
         }
 
-        const transitionSound = document.getElementById('transition-sound');
-        const completionSound = document.getElementById('completion-sound');
-        const triplesound = document.getElementById('triple-sound');
-
-
         function moveToNextPhase() {
-            // Play sound when transitioning out of warmup
-            if (phases[currentPhaseIndex] === "warmup") {
-                completionSound.play();  // Play transition sound
+            currentPhaseIndex++;
+
+            if (currentPhaseIndex >= phases.length) {
+                // Timer complete
+                pauseTimer();
+                transitionSound.play()
+                const interval = setInterval(function() {
+                    transitionSound.play();
+                    }, 2000);
+
+                    // To stop the interval after some time, you can use clearInterval
+                    setTimeout(() => clearInterval(interval), 6000); 
+                return;
             }
 
-            currentPhaseIndex = (currentPhaseIndex + 1) % phases.length;
-            if (currentPhaseIndex === 0) {
-                if (currentSet < timerData.sets) {
-                    currentSet++;
-                } else {
-                    pauseTimer();
-                    triplesound.play();  // Play completion sound after cooldown
-                    alert("Timer complete!");
-                    return;
-                }
-            }
-            timeRemaining = timerData[phases[currentPhaseIndex]];
+            // Play transition sound for phase changes within the workout
+            transitionSound.play();
+
+            timeRemaining = phases[currentPhaseIndex].duration;
             updateBackgroundColor();
             updateDisplay();
         }
 
-        function pauseTimer() {
+        function pauseTimer(userInitiated = false) {
             if (isRunning) {
                 isRunning = false;
+                if (userInitiated) {
+                    completionSound.play();  // Play sound only if the user clicked the pause button
+                }
                 playPauseBtn.textContent = "▶";
                 clearInterval(timer);
-
-                // Play completion sound after cooldown ends
-                if (phases[currentPhaseIndex] === "cooldown" && currentSet === timerData.sets) {
-                    triplesound.play();
-                }
             }
         }
+
 
 
         function moveToPreviousPhase() {
-            currentPhaseIndex = (currentPhaseIndex - 1 + phases.length) % phases.length;
-            if (currentPhaseIndex === phases.length - 1) {
+            pauseTimer();
+            currentPhaseIndex--;
+            completionSound.play()
+            if (currentPhaseIndex < 0) {
+                currentPhaseIndex = phases.length - 1;
                 if (currentSet > 1) {
                     currentSet--;
-                } else {
-                    currentSet = 1;
-                    currentPhaseIndex = 0;
                 }
             }
-            timeRemaining = timerData[phases[currentPhaseIndex]];
+
+            timeRemaining = phases[currentPhaseIndex].duration;
             updateBackgroundColor();
             updateDisplay();
         }
 
-        playPauseBtn.addEventListener('click', () => {
+        playPauseBtn.addEventListener('click', function() {
             if (isRunning) {
-                pauseTimer();
-                transitionSound.play();
-
+                pauseTimer(true);  // User clicked the pause button, so pass `true`
             } else {
                 startTimer();
-                transitionSound.play();
             }
         });
 
-        nextBtn.addEventListener('click', () => {
-            pauseTimer();
-            moveToNextPhase();
-        });
 
-        prevBtn.addEventListener('click', () => {
-            pauseTimer();
-            moveToPreviousPhase();
-        });
+        prevBtn.addEventListener('click', moveToPreviousPhase);
+        nextBtn.addEventListener('click', moveToNextPhase);
+        menuBtn.addEventListener('click', navigateToViewTimers);
 
-        // Initialize display
-        updateDisplay();
-        updateBackgroundColor();
-
-        // You can add event listeners for other buttons (menu, info) here
+        initializeTimer();
     </script>
 </body>
 </html>

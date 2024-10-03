@@ -4,37 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #f4f4f4;
+            background-color: #ffffff;
+            font-family: Arial, sans-serif;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen">
-
-    <div class="max-w-md w-full bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-8">
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Create Your Account</h2>
-        
-        <form method="POST" action="{{ url_for('signup') }}">
-            <div class="mb-4">
-                <label for="username" class="block text-gray-700 text-sm font-semibold mb-1">Username</label>
-                <input type="text" id="username" name="username" class="shadow-md appearance-none border border-gray-300 rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            </div>
-            <div class="mb-6">
-                <label for="password" class="block text-gray-700 text-sm font-semibold mb-1">Password</label>
-                <input type="password" id="password" name="password" class="shadow-md appearance-none border border-gray-300 rounded w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500" required>
-            </div>
-            <div class="flex items-center justify-between">
-                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                    Sign Up
-                </button>
-                <a href="{{ url_for('login') }}" class="inline-block align-baseline font-semibold text-sm text-blue-500 hover:text-blue-800">
-                    Already have an account? Login
-                </a>
-            </div>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="w-full max-w-md">
+        <div class="flex items-center mb-8">
+            <img src="/static/logo.png" alt="BFF Logo" class="w-12 h-12 mr-2">
+            <h1 class="text-2xl font-bold">BFF Timer</h1>
+        </div>
+        <form method="POST" action="{{ url_for('signup') }}" class="space-y-4">
+            <input type="text" id="username" name="username" placeholder="Email" class="w-full p-3 border border-gray-300 rounded-md text-lg" required>
+            <input type="password" id="password" name="password" placeholder="PASSWORD" class="w-full p-3 border border-gray-300 rounded-md text-lg uppercase" required>
+            <button type="submit" class="w-full p-3 bg-blue-500 text-white rounded-md text-lg font-semibold">Sign Up</button>
         </form>
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('login') }}" class="text-blue-500 hover:text-blue-700">Already have an account? Login</a>
+        </div>
     </div>
-    
 </body>
 </html>
