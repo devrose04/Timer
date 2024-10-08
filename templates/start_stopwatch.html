@@ -6,7 +6,6 @@
     <title>Interval Timer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,48 +21,58 @@
     
         .timer-container {
             width: 100%;
-            height: 100vh; /* Full height */
+            height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
-            background-color: rgba(0, 0, 0, 0.8); /* Dark background */
-            border-radius: 0; /* Remove border-radius for full screen */
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 0;
             overflow: hidden;
             box-shadow: none;
             transition: background-color 0.5s ease;
         }
     
         .time-display {
-            font-size: 50vw; /* Responsive font size for seconds */
-            max-font-size: 400px; /* Prevents it from getting too large */
+            font-size: min(35vw, 400px); /* Key fix: Using min() function */
             text-align: center;
             padding: 0;
             margin: 0;
+            /* Ensure numbers don't overflow their container */
+            width: 100%;
+            box-sizing: border-box;
+            /* Add some responsive padding */
+            padding: 0 20px;
+            /* Maintain aspect ratio */
+            line-height: 1.2;
+            /* Ensure text doesn't wrap */
+            white-space: nowrap;
         }
     
         .timer-details {
             display: flex;
             justify-content: space-around;
             width: 100%;
-            padding: 20px;
+            padding: 40px 0;
             background-color: rgba(0, 0, 0, 0.2);
         }
     
         .timer-details div {
             text-align: center;
+            flex: 1;
+            padding: 0 10px;
         }
     
         .timer-details h3 {
             margin: 0;
-            font-size: 5vw; /* Responsive size for headings */
+            font-size: min(5vw, 32px); /* Using min() for better scaling */
             font-weight: normal;
         }
     
         .timer-details p {
             margin: 5px 0 0;
-            font-size: 4vw; /* Responsive size for text */
+            font-size: min(4vw, 24px); /* Using min() for better scaling */
         }
     
         .controls {
@@ -78,34 +87,32 @@
             background: none;
             border: none;
             color: white;
-            font-size: 5vw; /* Responsive size for button icons */
+            font-size: min(5vw, 36px); /* Using min() for better scaling */
             cursor: pointer;
+            padding: 10px;
+            transition: transform 0.2s;
+        }
+
+        .controls button:hover {
+            transform: scale(1.1);
         }
     
         @media (min-width: 768px) {
-            .time-display {
-                font-size: 400px; /* Fixed size for larger screens */
-            }
-            .timer-details h3 {
-                font-size: 50px; /* Fixed size for headings */
-            }
-            .timer-details p {
-                font-size: 48px; /* Fixed size for text */
-            }
-            .controls button {
-                font-size: 56px; /* Fixed size for button icons */
+            .timer-container {
+                height: auto;
+                min-height: 100vh;
             }
         }
+
     </style>
-    
 </head>
 <body>
     <div class="timer-container">
-        <div class="time-display">00:25</div>
+        <div class="time-display">00:00</div>
         <div class="timer-details">
             <div>
                 <h3>ELAPSED</h3>
-                <p id="elapsed">0:05</p>
+                <p id="elapsed">0:00</p>
             </div>
             <div>
                 <h3>SET</h3>
@@ -113,23 +120,21 @@
             </div>
             <div>
                 <h3>REMAINING</h3>
-                <p id="remaining">29:55</p>
+                <p id="remaining">00:00</p>
             </div>
         </div>
         <div class="controls">
-            <!-- Add a data-url attribute with the link to the View Timers page -->
             <button id="menu-btn" data-url="{{ url_for('view_timers') }}">⬅</button>
             <button id="prev-btn">◀ Prev</button>
             <button id="play-pause-btn"><i class="fas fa-play"></i></button>
             <button id="next-btn">Next ▶</button>
-            <button id="info-btn">ⓘ</button>
+            <button id="reset-btn"><i class="fas fa-redo"></i></button>
         </div>
     </div>
     <audio id="transition-sound" src="/static/sounds/sound1.mp3"></audio>
     <audio id="completion-sound" src="/static/sounds/complete1.mp3"></audio>
 
     <script>
-        // Timer data will be populated by the server-side template
         const timerData = {
             name: "{{ timer_name }}",
             intervals: {{ intervals|tojson if intervals else 'null' }},
@@ -162,6 +167,7 @@
         const playPauseBtn = document.getElementById('play-pause-btn');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
+        const resetBtn = document.getElementById('reset-btn');
         const timerContainer = document.querySelector('.timer-container');
         const bodyElement = document.body;
         const menuBtn = document.getElementById('menu-btn');
@@ -169,11 +175,9 @@
         const transitionSound = document.getElementById('transition-sound');
         const completionSound = document.getElementById('completion-sound');
 
-
         function navigateToViewTimers() {
             const url = menuBtn.getAttribute('data-url');
             if (url) {
-                // If a timer is running, ask for confirmation before navigating away
                 if (isRunning) {
                     if (confirm("Timer is still running. Are you sure you want to exit?")) {
                         window.location.href = url;
@@ -186,15 +190,22 @@
             }
         }
 
+        function resetTimer() {
+            pauseTimer();
+            currentPhaseIndex = 0;
+            currentSet = 1;
+            timeElapsed = 0;
+            initializeTimer();
+            completionSound.play();
+        }
+
         function initializeTimer() {
             phases = [];
             
-            // Include warmup only once at the start
             if (timerData.warmup > 0) {
                 phases.push({ name: 'warmup', duration: timerData.warmup, color: phaseColors.warmup });
             }
 
-            // Add high and low phases for each set
             for (let i = 0; i < timerData.sets; i++) {
                 if (timerData.high > 0) {
                     phases.push({ name: 'high', duration: timerData.high, color: phaseColors.high, set: i + 1 });
@@ -204,34 +215,41 @@
                 }
             }
 
-            // Include cooldown only once after all sets
             if (timerData.cooldown > 0) {
                 phases.push({ name: 'cooldown', duration: timerData.cooldown, color: phaseColors.cooldown });
             }
 
-            // Set the initial remaining time to the duration of the first phase
-            currentPhaseIndex = 0; // Reset currentPhaseIndex to start from the first phase
-            timeRemaining = phases[currentPhaseIndex].duration;
-            timeElapsed = 0; // Reset the time elapsed at the start of the timer
-            currentSet = 1;  // Reset the current set
+            currentPhaseIndex = 0;
+            timeRemaining = phases[0].duration;
+            timeElapsed = 0;
+            currentSet = 1;
             updateDisplay();
             updateBackgroundColor();
         }
 
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function calculateTotalRemainingTime() {
+            let totalRemaining = timeRemaining;
+            for (let i = currentPhaseIndex + 1; i < phases.length; i++) {
+                totalRemaining += phases[i].duration;
+            }
+            return totalRemaining;
+        }
 
         function updateDisplay() {
             if (phases[currentPhaseIndex].name === 'high') {
-                // Count up for high-intensity phases
                 timeDisplayElement.textContent = formatTime(timeElapsed);
-                console.log("high phase")
             } else {
-                // Count down for other phases
                 timeDisplayElement.textContent = formatTime(timeRemaining);
             }
 
             elapsedElement.textContent = formatTime(timeElapsed);
             
-            // Update set display
             let currentSetNumber = 1;
             for (let i = 0; i <= currentPhaseIndex; i++) {
                 if (phases[i].set) {
@@ -243,94 +261,64 @@
             remainingElement.textContent = formatTime(calculateTotalRemainingTime());
         }
 
-        function startTimer() {
-            if (!isRunning) {
-                isRunning = true;
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>'; // Change icon to pause
-                completionSound.play();
-                timer = setInterval(() => {
-                    if (phases[currentPhaseIndex].name === 'high') {
-                        // Count up for high-intensity
-                        timeElapsed++;
-                        if (timeElapsed >= phases[currentPhaseIndex].duration) {
-                            moveToNextPhase(); // Move to the next phase when high-intensity is done
-                        }
-                    } else if (timeRemaining > 0) {
-                        // Count down for other phases
-                        timeRemaining--;
-                        timeElapsed++;
-                        if (timeRemaining === 0) {
-                            moveToNextPhase(); // Move to the next phase when other phases are done
-                        }
-                    }
-
-                    updateDisplay();
-                }, 1000);
-            }
-        }
-
-
-        function calculateTotalRemainingTime() {
-            let totalRemaining = timeRemaining;
-            for (let i = currentPhaseIndex + 1; i < phases.length; i++) {
-                totalRemaining += phases[i].duration;
-            }
-            return totalRemaining;
-        }
-
-
-
-
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const remainingSeconds = seconds % 60;
-            return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-        }
-
         function updateBackgroundColor() {
             const currentColor = phases[currentPhaseIndex].color;
             timerContainer.style.backgroundColor = currentColor;
             bodyElement.style.backgroundColor = currentColor;
         }
 
-        function moveToNextPhase() {
-            currentPhaseIndex++;
-
-            if (currentPhaseIndex >= phases.length) {
-                // Timer complete
-                pauseTimer();
-                transitionSound.play();
-                const interval = setInterval(function() {
-                    transitionSound.play();
-                    }, 2000);
-
-                    // To stop the interval after some time, you can use clearInterval
-                    setTimeout(() => clearInterval(interval), 6000); 
-                return;
+        function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                completionSound.play();
+                timer = setInterval(() => {
+                    if (phases[currentPhaseIndex].name === 'high') {
+                        timeElapsed++;
+                        if (timeElapsed >= phases[currentPhaseIndex].duration) {
+                            moveToNextPhase();
+                        }
+                    } else if (timeRemaining > 0) {
+                        timeRemaining--;
+                        timeElapsed++;
+                        if (timeRemaining === 0) {
+                            moveToNextPhase();
+                        }
+                    }
+                    updateDisplay();
+                }, 1000);
             }
-
-            // Reset timeElapsed for the next phase
-            timeElapsed = 0;
-
-            // Play transition sound for phase changes within the workout
-            transitionSound.play();
-
-            // Update current phase and timings
-            timeRemaining = phases[currentPhaseIndex].duration;
-            updateBackgroundColor();
-            updateDisplay();
         }
-
 
         function pauseTimer(userInitiated = false) {
             if (isRunning) {
                 isRunning = false;
                 if (userInitiated) {
-                    completionSound.play();  // Play sound only if the user clicked the pause button
+                    completionSound.play();
                 }
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>'; // Change icon to play
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
                 clearInterval(timer);
             }
+        }
+
+        function moveToNextPhase() {
+            currentPhaseIndex++;
+
+            if (currentPhaseIndex >= phases.length) {
+                pauseTimer();
+                transitionSound.play();
+                const interval = setInterval(function() {
+                    transitionSound.play();
+                }, 2000);
+                setTimeout(() => clearInterval(interval), 6000);
+                return;
+            }
+
+            timeElapsed = 0;
+            transitionSound.play();
+            timeRemaining = phases[currentPhaseIndex].duration;
+            updateBackgroundColor();
+            updateDisplay();
         }
 
         function moveToPreviousPhase() {
@@ -351,7 +339,7 @@
 
         playPauseBtn.addEventListener('click', function() {
             if (isRunning) {
-                pauseTimer(true);  // User clicked the pause button, so pass `true`
+                pauseTimer(true);
             } else {
                 startTimer();
             }
@@ -359,6 +347,7 @@
         
         prevBtn.addEventListener('click', moveToPreviousPhase);
         nextBtn.addEventListener('click', moveToNextPhase);
+        resetBtn.addEventListener('click', resetTimer);
         menuBtn.addEventListener('click', navigateToViewTimers);
 
         initializeTimer();

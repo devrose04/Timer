@@ -19,7 +19,6 @@
             </a>
         </div>
 
-        
         {% if current_user.role == 'admin' %}
         <div class="mb-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
             <a href="{{ url_for('create_timer') }}" class="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600 text-center">
@@ -37,65 +36,59 @@
         </div>
         {% endif %}
         
-        <div class="mb-8 flex justify-between items-center">
+        <div class="mb-8">
             <h2 class="text-2xl font-semibold text-gray-700">Timers</h2>
-            <button id="sortButton" class="flex items-center bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-600">
-                Sort <i class="fas fa-sort-alpha-down ml-2"></i>
-            </button>
         </div>
 
         <div id="timersContainer" class="space-y-4">
             {% if timers or custom_timers or stopwatch_timers %}
+                {# Combine all timers into a single list and sort #}
+                {% set all_timers = [] %}
                 {% for timer in timers %}
-                    <div class="timer-item flex items-center bg-white shadow rounded-lg p-4" data-name="{{ timer.name }}">
-                        <a href="{{ url_for('start_timer', timer_id=timer.id) }}" class="flex-grow text-lg font-semibold text-gray-800 hover:text-blue-600">
-                            {{ timer.name }}
+                    {% set _ = all_timers.append({
+                        'id': timer.id,
+                        'name': timer.name,
+                        'type': 'hiit',
+                        'timer': timer
+                    }) %}
+                {% endfor %}
+                {% for timer in custom_timers %}
+                    {% set _ = all_timers.append({
+                        'id': timer.id,
+                        'name': timer.name,
+                        'type': 'custom',
+                        'timer': timer
+                    }) %}
+                {% endfor %}
+                {% for timer in stopwatch_timers %}
+                    {% set _ = all_timers.append({
+                        'id': timer.id,
+                        'name': timer.name,
+                        'type': 'stopwatch',
+                        'timer': timer
+                    }) %}
+                {% endfor %}
+
+                {% for timer_info in all_timers|sort(attribute='name') %}
+                    <div class="timer-item flex items-center bg-white shadow rounded-lg p-4">
+                        <a href="{{ 
+                            url_for('start_timer', timer_id=timer_info.id) if timer_info.type == 'hiit' else 
+                            url_for('start_custom_timer', timer_id=timer_info.id) if timer_info.type == 'custom' else 
+                            url_for('start_stopwatch', timer_id=timer_info.id)
+                        }}" class="flex-grow text-lg font-semibold text-gray-800 hover:text-blue-600">
+                            {{ timer_info.name }}
                         </a>
                         {% if current_user.role == 'admin' %}
                             <div class="ml-4 space-x-2">
-                                <a href="{{ url_for('edit_timer', timer_id=timer.id) }}" class="text-gray-600 hover:text-blue-600">
+                                <a href="{{ 
+                                    url_for('edit_timer', timer_id=timer_info.id) if timer_info.type == 'hiit' else 
+                                    url_for('edit_custom_timer', timer_id=timer_info.id) if timer_info.type == 'custom' else 
+                                    url_for('edit_stopwatch', timer_id=timer_info.id)
+                                }}" class="text-gray-600 hover:text-blue-600">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <form action="{{ url_for('delete_timer', timer_id=timer.id) }}" method="POST" class="inline">
+                                <form action="{{ url_for('delete_timer', timer_id=timer_info.id) }}" method="POST" class="inline">
                                     <button type="submit" class="text-gray-600 hover:text-red-600" onclick="return confirm('Are you sure you want to delete this timer?');">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-                {% for custom_timer in custom_timers %}
-                    <div class="timer-item flex items-center bg-white shadow rounded-lg p-4" data-name="{{ custom_timer.name }}">
-                        <a href="{{ url_for('start_custom_timer', timer_id=custom_timer.id) }}" class="flex-grow text-lg font-semibold text-gray-800 hover:text-blue-600">
-                            {{ custom_timer.name }}
-                        </a>
-                        {% if current_user.role == 'admin' %}
-                            <div class="ml-4 space-x-2">
-                                <a href="{{ url_for('edit_custom_timer', timer_id=custom_timer.id) }}" class="text-gray-600 hover:text-blue-600">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ url_for('delete_timer', timer_id=custom_timer.id) }}" method="POST" class="inline">
-                                    <button type="submit" class="text-gray-600 hover:text-red-600" onclick="return confirm('Are you sure you want to delete this custom timer?');">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-                {% for stopwatch in stopwatch_timers %}
-                    <div class="timer-item flex items-center bg-white shadow rounded-lg p-4" data-name="{{ stopwatch.name }}">
-                        <a href="{{ url_for('start_stopwatch', timer_id=stopwatch.id) }}" class="flex-grow text-lg font-semibold text-gray-800 hover:text-blue-600">
-                            {{ stopwatch.name }}
-                        </a>
-                        {% if current_user.role == 'admin' %}
-                            <div class="ml-4 space-x-2">
-                                <a href="{{ url_for('edit_stopwatch', timer_id=stopwatch.id) }}" class="text-gray-600 hover:text-blue-600">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form action="{{ url_for('delete_timer', timer_id=stopwatch.id) }}" method="POST" class="inline">
-                                    <button type="submit" class="text-gray-600 hover:text-red-600" onclick="return confirm('Are you sure you want to delete this stopwatch?');">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
@@ -108,32 +101,5 @@
             {% endif %}
         </div>
     </div>
-
-    <script>
-    document.getElementById('sortButton').addEventListener('click', function() {
-        function sortTimers(timerItems) {
-            return timerItems.sort((a, b) => {
-                const nameA = a.getAttribute('data-name').toLowerCase();
-                const nameB = b.getAttribute('data-name').toLowerCase();
-                return nameA.localeCompare(nameB);
-            });
-        }
-
-        const timersContainer = document.getElementById('timersContainer');
-        const allTimerItems = Array.from(timersContainer.getElementsByClassName('timer-item'));
-        const sortedTimers = sortTimers(allTimerItems);
-
-        timersContainer.innerHTML = '';
-
-        const sortedTimersContainer = document.createElement('div');
-        sortedTimersContainer.className = 'space-y-4';
-
-        sortedTimers.forEach(timer => {
-            sortedTimersContainer.appendChild(timer);
-        });
-
-        timersContainer.appendChild(sortedTimersContainer);
-    });
-    </script>
 </body>
 </html>
